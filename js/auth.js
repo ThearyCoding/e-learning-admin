@@ -9,7 +9,6 @@ import {
   getFirestore,
   doc,
   getDoc,
-  setDoc,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Firebase Configuration
@@ -74,11 +73,7 @@ $("#login-form").submit(async (e) => {
   showLoading();
 
   try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const userId = userCredential.user.uid;
 
     // Check if user is already registered
@@ -87,7 +82,8 @@ $("#login-form").submit(async (e) => {
 
     if (userDoc.exists()) {
       alert("Welcome back! Redirecting to Admin Panel...");
-      window.location.href = "admin-panel.html";
+      const currentHash = window.location.hash || "#dashboard";
+      window.location.href = `admin-panel.html${currentHash}`;
     } else {
       alert("Please complete your registration.");
       window.location.href = "registration-form.html";
@@ -99,23 +95,21 @@ $("#login-form").submit(async (e) => {
   }
 });
 
-// Redirect logged-in users (optional)
+// Redirect logged-in users while preserving the current hash
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    showLoading();
+    const currentHash = window.location.hash || "#dashboard"; // Preserve the current hash
     try {
       const userDocRef = doc(db, "admins", user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        window.location.href = "admin-panel.html"; // Already registered
+        window.location.href = `admin-panel.html${currentHash}`; // Redirect but keep the hash
       } else {
         window.location.href = "registration-form.html"; // Registration required
       }
     } catch (error) {
       console.error("Error checking user registration status:", error);
-    } finally {
-      hideLoading();
     }
   }
 });
