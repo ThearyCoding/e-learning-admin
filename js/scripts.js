@@ -1,5 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"; // Import signOut
+import {
+  getAuth,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -15,23 +19,44 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Function to check login status
+function checkLoginStatus() {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      resolve(!!user); // Resolve true if user is logged in, else false
+    });
+  });
+}
+
 // Logout functionality
-document.getElementById("logout-link").addEventListener("click", async (e) => {
-  e.preventDefault();
-  try {
-    await signOut(auth); // Correct usage of signOut
-    alert("You have been logged out successfully.");
-    window.location.href = "index.html"; // Redirect to login or auth panel
-  } catch (error) {
-    console.error("Error during logout:", error);
-    alert("An error occurred while logging out. Please try again.");
-  }
-});
+const logoutLink = document.getElementById("logout-link");
+if (logoutLink) {
+  logoutLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      await signOut(auth);
+      alert("You have been logged out successfully.");
+      window.location.href = "index.html"; // Redirect to login
+    } catch (error) {
+      console.error("Error during logout:", error);
+      alert("An error occurred while logging out. Please try again.");
+    }
+  });
+}
 
 // Dynamically load HTML content for each section
-function loadContent(section) {
+async function loadContent(section) {
+  const isLoggedIn = await checkLoginStatus();
+  if (!isLoggedIn) {
+    alert("You need to log in to access this section.");
+    window.location.href = "index.html"; // Redirect unauthorized user to login
+    return;
+  }
+
   const contentArea = $("#content-area");
-  contentArea.html('<div class="spinner-border text-primary" role="status"></div>'); // Show loading spinner
+  contentArea.html(
+    '<div class="spinner-border text-primary" role="status"></div>'
+  ); // Show loading spinner
 
   // Load the appropriate section file
   $.ajax(`html/${section}.html`)
@@ -44,12 +69,21 @@ function loadContent(section) {
       }
     })
     .fail(function () {
-      contentArea.html('<p class="text-danger">Failed to load content. Please try again later.</p>');
+      contentArea.html(
+        '<p class="text-danger">Failed to load content. Please try again later.</p>'
+      );
     });
 }
 
 // Initialize the page based on the hash
-function handleRoute() {
+async function handleRoute() {
+  const isLoggedIn = await checkLoginStatus();
+  if (!isLoggedIn) {
+    alert("You need to log in to access this section.");
+    window.location.href = "index.html"; // Redirect unauthorized user to login
+    return;
+  }
+
   const hash = window.location.hash.replace("#", "") || "dashboard"; // Default to dashboard
   loadContent(hash);
   setActiveLink(hash + "-link"); // Update the active link
