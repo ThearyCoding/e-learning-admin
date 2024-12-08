@@ -1,30 +1,13 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore,
   doc,
   getDoc,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBFMiSBy16WC-oNap5CIm9gAinbPdhhMoM",
-  authDomain: "elearning-app-a6e15.firebaseapp.com",
-  projectId: "elearning-app-a6e15",
-  storageBucket: "elearning-app-a6e15.appspot.com",
-  messagingSenderId: "958733498686",
-  appId: "1:958733498686:web:ddfaf4192c4a5feff0d46f",
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { db, auth } from "./firebase-config.js";
 
 const showLoading = () => {
   document.getElementById("loading-indicator").style.display = "flex";
@@ -73,7 +56,11 @@ $("#login-form").submit(async (e) => {
   showLoading();
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     const userId = userCredential.user.uid;
 
     // Check if user is already registered

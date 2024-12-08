@@ -1,4 +1,5 @@
 import { auth } from "./firebase-config.js";
+import { loadUsers } from "./manage-users.js";
 import {
   signOut,
   onAuthStateChanged,
@@ -40,8 +41,10 @@ async function loadContent(section) {
 
   const contentArea = $("#content-area");
   contentArea.html(
-    '<div class="spinner-border text-primary" role="status"></div>'
-  ); // Show loading spinner
+    '<div class="d-flex justify-content-center align-items-center" style="height: 100vh;">' +
+      '<div class="spinner-border text-primary" role="status"></div>' +
+      "</div>"
+  );
 
   // Load the appropriate section file
   $.ajax(`html/${section}.html`)
@@ -80,27 +83,10 @@ function setActiveLink(id) {
   $("#" + id).addClass("active");
 }
 
-// Function to refresh or reload the page on sidebar link click
-function setupSidebarLinks() {
-  const sidebarLinks = document.querySelectorAll("#sidebar a");
-
-  sidebarLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault(); // Prevent default anchor behavior
-
-      const section = link.getAttribute("href").replace("#", "");
-      // Set the hash in the URL and reload the page
-      window.location.hash = section;
-      window.location.reload(); // Reload the entire page
-    });
-  });
-}
-
 // Load the appropriate content when the hash changes
 $(window).on("hashchange", handleRoute);
 
 // Initial setup on page load
 $(document).ready(function () {
-  handleRoute(); // Handle routing logic
-  setupSidebarLinks(); // Setup sidebar link reloading
+  handleRoute();
 });

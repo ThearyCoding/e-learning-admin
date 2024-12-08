@@ -42,22 +42,3 @@ body {
   margin-top: 20px;
 }
 
-
-
-#loading-spinner {
-  display: none;
-  position: absolute; /* Position it relative to the nearest positioned ancestor */
-  top: 50%; /* 50% from the top */
-  left: 50%; /* 50% from the left */
-  transform: translate(-50%, -50%); /* Adjusts to truly center the spinner */
-  text-align: center;
-  z-index: 10; /* Ensures it appears above other content */
-}
-
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
-}
-
-
-
