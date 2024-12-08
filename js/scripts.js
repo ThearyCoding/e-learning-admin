@@ -1,76 +1,14 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { auth } from "./firebase-config.js";
 import {
-  getAuth,
   signOut,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBFMiSBy16WC-oNap5CIm9gAinbPdhhMoM",
-  authDomain: "elearning-app-a6e15.firebaseapp.com",
-  projectId: "elearning-app-a6e15",
-  storageBucket: "elearning-app-a6e15.appspot.com",
-  messagingSenderId: "958733498686",
-  appId: "1:958733498686:web:ddfaf4192c4a5feff0d46f",
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app); // Firestore initialization
-
-// Function to fetch admin data
-async function fetchAdminData(uid) {
-  try {
-    const adminDocRef = doc(db, "admins", uid); // Reference to Firestore document
-    const adminDoc = await getDoc(adminDocRef);
-
-    if (adminDoc.exists()) {
-      return adminDoc.data(); // Return admin data
-    } else {
-      console.error("Admin document not found.");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error fetching admin data:", error);
-    return null;
-  }
-}
-
-// Function to display admin info
-function displayAdminInfo(adminData) {
-  const adminNameElement = document.getElementById("admin-name");
-  const adminImageElement = document.getElementById("admin-image");
-
-  if (adminData) {
-    const { fullName, imageUrl } = adminData;
-
-    // Update UI with admin data
-    adminNameElement.textContent = fullName || "Admin Name";
-    adminImageElement.src = imageUrl || "default-profile.png"; // Default image fallback
-  } else {
-    adminNameElement.textContent = "Unknown Admin";
-    adminImageElement.src = "default-profile.png"; // Default image
-  }
-}
-
-// Check login status and fetch data
+// Function to check login status
 function checkLoginStatus() {
   return new Promise((resolve) => {
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const adminData = await fetchAdminData(user.uid);
-        displayAdminInfo(adminData); // Display admin info
-        resolve(true); // User is logged in
-      } else {
-        resolve(false); // User is not logged in
-      }
+    onAuthStateChanged(auth, (user) => {
+      resolve(!!user); // Resolve true if user is logged in, else false
     });
   });
 }
@@ -142,10 +80,27 @@ function setActiveLink(id) {
   $("#" + id).addClass("active");
 }
 
+// Function to refresh or reload the page on sidebar link click
+function setupSidebarLinks() {
+  const sidebarLinks = document.querySelectorAll("#sidebar a");
+
+  sidebarLinks.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault(); // Prevent default anchor behavior
+
+      const section = link.getAttribute("href").replace("#", "");
+      // Set the hash in the URL and reload the page
+      window.location.hash = section;
+      window.location.reload(); // Reload the entire page
+    });
+  });
+}
+
 // Load the appropriate content when the hash changes
 $(window).on("hashchange", handleRoute);
 
 // Initial setup on page load
 $(document).ready(function () {
-  handleRoute();
+  handleRoute(); // Handle routing logic
+  setupSidebarLinks(); // Setup sidebar link reloading
 });
