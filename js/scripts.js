@@ -21,7 +21,7 @@ document.getElementById("logout-link").addEventListener("click", async (e) => {
   try {
     await signOut(auth); // Correct usage of signOut
     alert("You have been logged out successfully.");
-    window.location.href = "auth-page.html"; // Redirect to login or auth panel
+    window.location.href = "index.html"; // Redirect to login or auth panel
   } catch (error) {
     console.error("Error during logout:", error);
     alert("An error occurred while logging out. Please try again.");
