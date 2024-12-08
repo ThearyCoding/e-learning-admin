@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration Form</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .form-container {
+        width: 400px;
+        padding: 20px;
+        margin: auto;
+        margin-top: 50px;
+        background-color: #f8f9fa;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+      }
+      .form-control {
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container d-flex justify-content-center align-items-center">
+      <div class="form-container">
+        <h4 class="text-center mb-4">Complete Registration</h4>
+        <form id="registration-form">
+          <div class="mb-3">
+            <label for="full-name" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="full-name" required />
+          </div>
+          <div class="mb-3">
+            <label for="phone-number" class="form-label">Phone Number</label>
+            <input
+              type="text"
+              class="form-control"
+              id="phone-number"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="profile-image" class="form-label"
+              >Upload Profile Image</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="profile-image"
+              accept="image/*"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js"></script>
+    <script>
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+      import {
+        getStorage,
+        ref,
+        uploadBytes,
+        getDownloadURL,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+
+      // Firebase Configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBFMiSBy16WC-oNap5CIm9gAinbPdhhMoM",
+        authDomain: "elearning-app-a6e15.firebaseapp.com",
+        projectId: "elearning-app-a6e15",
+        storageBucket: "elearning-app-a6e15.appspot.com",
+        messagingSenderId: "958733498686",
+        appId: "1:958733498686:web:ddfaf4192c4a5feff0d46f",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const storage = getStorage(app);
+
+      // Form submission handler
+      document
+        .getElementById("registration-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const fullName = document.getElementById("full-name").value;
+          const phoneNumber = document.getElementById("phone-number").value;
+          const profileImage =
+            document.getElementById("profile-image").files[0];
+
+          try {
+            const user = auth.currentUser;
+            if (!user) {
+              alert("User is not logged in!");
+              return;
+            }
+
+            // Check if user already exists
+            const userDocRef = doc(db, "admins", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              alert(
+                "User is already registered. Redirecting to admin panel..."
+              );
+              window.location.href = "admin-panel.html";
+              return;
+            }
+
+            // Upload profile image
+            const storageRef = ref(storage, `profile-images/${user.uid}`);
+            await uploadBytes(storageRef, profileImage);
+            const imageUrl = await getDownloadURL(storageRef);
+
+            // Save user data to Firestore
+            await setDoc(userDocRef, {
+              uid: user.uid, // User ID from Firebase Auth
+              email: user.email, // Email from Firebase Auth
+              firstName: fullName.split(" ")[0], // Extract first name
+              lastName: fullName.split(" ").slice(1).join(" "), // Extract last name
+              fullName, // Full name from form
+              phoneNumber, // Phone number from form
+              imageUrl, // Uploaded image URL
+              role: "regular_admin", // Default role
+              createdAt: new Date().toISOString(), // Timestamp for creation
+              updatedAt: new Date().toISOString(), // Timestamp for last update
+            });
+
+            alert("Registration complete! Redirecting to admin panel...");
+            window.location.href = "admin-panel.html";
+          } catch (error) {
+            console.error("Error during registration:", error);
+            alert("An error occurred. Please try again.");
+          }
+        });
+
+      // Ensure the user is logged in
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          alert("You must be logged in to complete the registration.");
+          window.location.href = "auth-panel.html";
+        }
+      });
+    </script>
+  </body>
+</html>
