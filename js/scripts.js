@@ -4,6 +4,11 @@ import {
   signOut,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -18,12 +23,54 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app); // Firestore initialization
 
-// Function to check login status
+// Function to fetch admin data
+async function fetchAdminData(uid) {
+  try {
+    const adminDocRef = doc(db, "admins", uid); // Reference to Firestore document
+    const adminDoc = await getDoc(adminDocRef);
+
+    if (adminDoc.exists()) {
+      return adminDoc.data(); // Return admin data
+    } else {
+      console.error("Admin document not found.");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching admin data:", error);
+    return null;
+  }
+}
+
+// Function to display admin info
+function displayAdminInfo(adminData) {
+  const adminNameElement = document.getElementById("admin-name");
+  const adminImageElement = document.getElementById("admin-image");
+
+  if (adminData) {
+    const { fullName, imageUrl } = adminData;
+
+    // Update UI with admin data
+    adminNameElement.textContent = fullName || "Admin Name";
+    adminImageElement.src = imageUrl || "default-profile.png"; // Default image fallback
+  } else {
+    adminNameElement.textContent = "Unknown Admin";
+    adminImageElement.src = "default-profile.png"; // Default image
+  }
+}
+
+// Check login status and fetch data
 function checkLoginStatus() {
   return new Promise((resolve) => {
-    onAuthStateChanged(auth, (user) => {
-      resolve(!!user); // Resolve true if user is logged in, else false
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const adminData = await fetchAdminData(user.uid);
+        displayAdminInfo(adminData); // Display admin info
+        resolve(true); // User is logged in
+      } else {
+        resolve(false); // User is not logged in
+      }
     });
   });
 }
