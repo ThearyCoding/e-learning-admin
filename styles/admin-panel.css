@@ -41,4 +41,52 @@ body {
 .content-area {
   margin-top: 20px;
 }
+.table-container {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
+table {
+  width: 100%;
+  border-radius: 10px;
+  border-collapse: collapse;
+}
+
+
+/* Optional: Adding some spacing and padding to table cells */
+table th, table td {
+  padding: 15px;
+  text-align: center;
+}
+
+/* Add hover effect for the rows */
+table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Image styling for course images */
+.table img {
+  border-radius: 8px;
+  max-width: 100px;
+  max-height: 100px;
+}
+
+.course-item {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.btn-success {
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-success:hover {
+  background-color: #28a745;
+}

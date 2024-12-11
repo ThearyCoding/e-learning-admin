@@ -1,3 +1,4 @@
+import { loadCourses } from "./courses.js";
 import { auth } from "./firebase-config.js";
 import { loadUsers } from "./manage-users.js";
 import {
@@ -54,6 +55,8 @@ async function loadContent(section) {
         renderDashboardChart();
       } else if (section === "manage-users") {
         loadUsers();
+      }else if(section === "courses"){
+        loadCourses();
       }
     })
     .fail(function () {

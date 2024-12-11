@@ -17,6 +17,8 @@ function showLoadingSpinner(show) {
   }
 }
 
+
+
 // Load users from Firestore and display them in a Bootstrap table
 export async function loadUsers() {
   if (isLoading) {
