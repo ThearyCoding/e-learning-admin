@@ -41,6 +41,14 @@ body {
 .content-area {
   margin-top: 20px;
 }
+
+.table-container {
+  margin-bottom: 20px; /* Adjust this value for desired space */
+}
+
+.pagination {
+  margin-top: 20px; /* Adjust this value for space between table and pagination */
+}
 .table-container {
   margin-top: 20px;
   padding: 15px;

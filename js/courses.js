@@ -2,17 +2,54 @@ import { db } from "./firebase-config.js";
 import {
   getDocs,
   collectionGroup,
+  query,
+  limit,
+  startAfter,
+  endBefore,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+// Set initial page and limit
+let currentPage = 1; // Current page
+const coursesPerPage = 2; // Number of courses per page
+let lastVisible = null; // Keep track of the last document from the next page
+let firstVisible = null; // Keep track of the first document from the previous page
+let totalPages = 0; // Total number of pages
+
+// Function to load courses from Firestore with pagination
 export async function loadCourses() {
   const courseListDiv = $("#course-list");
-  const coursesRef = collectionGroup(db, "courses");
-  const coursesSnapshot = await getDocs(coursesRef);
+
+  // Show loading spinner
+  $("#loading-spinner").show();
+
+  // Fetch the total number of courses for pagination
+  const totalCoursesSnapshot = await getDocs(collectionGroup(db, "courses"));
+  const totalCourses = totalCoursesSnapshot.size;
+  totalPages = Math.ceil(totalCourses / coursesPerPage); // Calculate total pages
+
+  // Create the query for pagination: limit number of results
+  let coursesQuery = query(collectionGroup(db, "courses"), orderBy("title"), limit(coursesPerPage));
+
+  // If we are not on the first page, use startAfter to set the starting point from the last document
+  if (currentPage > 1 && lastVisible) {
+    coursesQuery = query(coursesQuery, startAfter(lastVisible));
+  } else if (currentPage < 1 && firstVisible) {
+    coursesQuery = query(coursesQuery, endBefore(firstVisible));
+  }
+
+  // Fetch the documents using the query
+  const coursesSnapshot = await getDocs(coursesQuery);
   const courses = coursesSnapshot.docs.map((doc) => doc.data());
 
-  // Clear the loading spinner
+  // Update the last visible document
+  if (coursesSnapshot.docs.length > 0) {
+    lastVisible = coursesSnapshot.docs[coursesSnapshot.docs.length - 1]; // Update the last visible document
+    firstVisible = coursesSnapshot.docs[0]; // Update the first visible document
+  }
+
+  // Hide the loading spinner after data is fetched
   $("#loading-spinner").hide();
-  console.table(courses);
 
   // Create a table for displaying courses
   if (courses.length > 0) {
@@ -35,12 +72,11 @@ export async function loadCourses() {
 
     // Populate the table rows with course data
     courses.forEach((course, index) => {
-      // Truncate description to first 200 characters
       let truncatedDescription = course.description.slice(0, 200);
 
       courseTable += `
         <tr>
-          <th scope="row">${index + 1}</th>
+          <th scope="row">${(currentPage - 1) * coursesPerPage + index + 1}</th>
           <td>${course.title}</td>
           <td class="description">
             <span class="description-text">${truncatedDescription}...</span>
@@ -62,6 +98,37 @@ export async function loadCourses() {
   } else {
     courseListDiv.html("<p>No courses available.</p>");
   }
+
+  // Pagination controls
+  let paginationControls = `<nav aria-label="Page navigation"><ul class="pagination">`;
+
+  // Previous button
+  paginationControls += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <button class="page-link" id="prev-page">Previous</button>
+    </li>
+  `;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    paginationControls += `
+      <li class="page-item ${currentPage === i ? 'active' : ''}">
+        <button class="page-link" data-page="${i}">${i}</button>
+      </li>
+    `;
+  }
+
+  // Next button
+  paginationControls += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <button class="page-link" id="next-page">Next</button>
+    </li>
+  `;
+
+  paginationControls += `</ul></nav>`;
+
+  // Append pagination controls
+  courseListDiv.append(paginationControls);
 }
 
 // Toggle description on "Read More" click
@@ -82,6 +149,21 @@ $(document).on("click", ".read-more", function () {
   }
 });
 
+// Handle pagination button clicks
+$(document).on("click", ".page-link", function () {
+  const page = $(this).data("page");
+
+  if (page) {
+    currentPage = page;
+  } else if ($(this).attr("id") === "prev-page" && currentPage > 1) {
+    currentPage--;
+  } else if ($(this).attr("id") === "next-page" && currentPage < totalPages) {
+    currentPage++;
+  }
+
+  loadCourses();
+});
+
 // Add course button functionality
 $("#add-course-btn").on("click", () => {
   // Redirect to add course form or open modal
@@ -90,15 +172,5 @@ $("#add-course-btn").on("click", () => {
 
 // Load courses when the page loads
 $(document).ready(function () {
-   // Call loadUsers when the page is initialized or when the "Manage Users" link is clicked
-   if (window.location.hash === "#courses") {
-    loadCourses(); // Load users on initialization if "Manage Users" is in the URL hash
-  }
-
-  $("#courses-link").on("click", function () {
-    if (window.location.hash !== "#courses") {
-      window.location.hash = "courses"; // Update URL hash
-      loadCourses(); // Load users when the link is clicked
-    }
-  });
+  loadCourses(); // Load courses when the page is initialized
 });
